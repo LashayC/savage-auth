@@ -11,8 +11,9 @@ module.exports = function(app, passport, db) {
     app.get('/profile', isLoggedIn, function(req, res) {
         db.collection('messages').find().toArray((err, result) => {
           if (err) return console.log(err)
+    //req.user if user is logged in and makigng a request, you can see everything bout that user also passed in.. Good for making profile pgs
           res.render('profile.ejs', {
-            user : req.user,
+            user : req.user, 
             messages: result
           })
         })
@@ -39,6 +40,21 @@ module.exports = function(app, passport, db) {
       .findOneAndUpdate({name: req.body.name, msg: req.body.msg}, {
         $set: {
           thumbUp:req.body.thumbUp + 1
+        }
+      }, {
+        sort: {_id: -1},
+        upsert: true
+      }, (err, result) => {
+        if (err) return res.send(err)
+        res.send(result)
+      })
+    })
+
+    app.put('/messagesTDown', (req, res) => {
+      db.collection('messages')
+      .findOneAndUpdate({name: req.body.name, msg: req.body.msg}, {
+        $set: {
+          thumbUp:req.body.thumbUp - 1
         }
       }, {
         sort: {_id: -1},
@@ -96,7 +112,7 @@ module.exports = function(app, passport, db) {
 
     // local -----------------------------------
     app.get('/unlink/local', isLoggedIn, function(req, res) {
-        var user            = req.user;
+        let user            = req.user;
         user.local.email    = undefined;
         user.local.password = undefined;
         user.save(function(err) {
